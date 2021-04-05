@@ -1,0 +1,135 @@
+<!doctype html>
+{% load staticfiles %}
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Greetings Cards Spammers</title>
+
+	<style>
+
+		table {
+		  font-family: Arial, Helvetica, sans-serif;
+		  width: 100%;
+		}
+
+		th {
+		  padding: 12px 0 12px 12px;
+		  text-align: left;
+		  background-color: #808080;
+		  color: white;
+		}
+
+		td {
+		  padding: 6px 0 6px 6px;
+		}
+
+		#container {
+			padding: 10px 50px 10px 50px;
+		}
+
+
+		.center-text {
+			text-align:center;
+		}
+
+		.paginate-button {
+		  background-color: #f1f1f1;
+		  color: black;
+		}
+
+		.last-contact {
+			border-bottom: 1px solid black;
+		}
+
+	</style>
+
+	<script src="{% static "js/jquery-2.1.1.js" %}"></script>
+	<script>
+
+		function checkContacts(companyId){
+			// The contact id follows 'companyId-contactId' format
+			var contactId = `[id^="${companyId}-"]`;
+
+			// Find all contacts and check for the background change
+			$(contactId).each( function() {
+				// The contacts for the mouse-overed company must also be highlit in yellow but only if they have more
+				// than 3 orders and more than 50 000 € in sales
+				if (parseInt($(this).data('order-sum')) > 50000 && parseInt($(this).data('order-count')) > 3){
+					$(this).css("background-color", 'yellow');
+				}
+			})
+		}
+
+		$(document).ready(function(){
+
+			$("table tr").hover(function(){
+				var trHovered = this;
+
+				// Reset background-color
+				$("table *").css("background-color", "");
+
+				if ($(trHovered).data('type') === 'company') {
+					// Upon mouse over, companies with over 50 000 € in sales must have their names painted with green background,
+					// and those with less than that with an orange background.
+					if (parseInt($(trHovered).data('order-sum')) > 50000 && $(trHovered).data('type') === 'company') {
+						$(trHovered).css("background-color", 'green');
+						checkContacts(trHovered.id)
+					} else {
+						$(trHovered).css("background-color", 'orange');
+					}
+				}
+			})
+		});
+
+	</script>
+
+</head>
+
+<body>
+	<div id="container">
+		<table>
+		{% if is_paginated %}
+		<tr><td>
+			{% if page_obj.has_previous %}
+				<a href="?page={{ page_obj.previous_page_number }}" class="paginate-button">&laquo; Previous</a>
+			{% endif %}
+			</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td style="text-align:right">
+			{% if page_obj.has_next %}
+				<a href="?page={{ page_obj.next_page_number }}" class="paginate-button">Next &raquo;</a>
+			{% endif %}
+			</td>
+		</tr>
+		{% endif %}
+		<tr style="margin-bottom:20px">
+			<th>Company Name</th>
+			<th>Contact Name</th>
+			<th class="center-text">Order Count</th>
+			<th class="center-text">Order Sum</th>
+			<th class="center-text">Select</th>
+		</tr>
+			{% for company in company_list %}
+			<tr id="{{company.id}}" data-type="company" data-order-sum="{{company.order_sum}}" data-order-count="{{company.order_count}}">
+				<td>{{ company.name }}</td>
+				<td></td>
+				<td class="center-text">{{ company.order_count }}</td>
+				<td class="center-text">{{ company.order_sum|floatformat:2 }}</td>
+				<td class="center-text"><input type="checkbox" name="select{{company.pk}}" id=""></td>
+			</tr>
+				{% for contact in company.contact_data %}
+				<tr id="{{company.id}}-{{contact.id}}" data-type="contact" data-order-sum="{{contact.order_sum}}" data-order-count="{{contact.order_count}}" {% if forloop.last %} class="last-contact" {% endif %} >
+					<td></td>
+					<td>{{ contact.first_name }} {{ contact.last_name }}</td>
+					<td class="center-text">{{ contact.order_count }}</td>
+					<td class="center-text">{{ contact.order_sum|floatformat:2 }}</td>
+					<td></td>
+				</tr>
+				{% endfor %}
+			{% endfor %}
+		</table>
+	</div>
+</body>
+</html>

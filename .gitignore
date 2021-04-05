@@ -1,0 +1,7 @@
+database.sqlite
+*.sqlite3
+*.sublime-workspace
+*.sublime-project
+postgres/
+postgres-data/
+*.pyc
